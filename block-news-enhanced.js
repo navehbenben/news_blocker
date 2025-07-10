@@ -14,6 +14,10 @@
   const isBlocked = blockedDomains.some(pattern => new RegExp(pattern).test(currentHost));
   if (!isBlocked) return;
 
+  // בדיקה אם יש הרשאת "כניסה זמנית"
+  const bypassUntil = parseInt(localStorage.getItem("newsBlockerBypassedUntil"), 10);
+  if (!isNaN(bypassUntil) && Date.now() < bypassUntil) return;
+
   const messages = {
     en: {
       title: "🛑 Take a Break from the News",
@@ -51,12 +55,10 @@
   const locale = messages[lang] ? lang : 'en';
   const { title, message, button, dir } = messages[locale];
 
-  // Clean up page
   document.head.innerHTML = "";
   document.body.innerHTML = "";
   document.title = title;
 
-  // Create animated and styled layout
   const style = document.createElement("style");
   style.textContent = `
     @keyframes fadeIn {
@@ -118,6 +120,8 @@
   document.body.appendChild(wrapper);
 
   document.getElementById("bypass").onclick = () => {
+    const expireTime = Date.now() + 30 * 60 * 1000; // 30 דקות
+    localStorage.setItem("newsBlockerBypassedUntil", expireTime.toString());
     location.reload();
   };
 })();
